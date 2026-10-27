@@ -25,11 +25,12 @@ jobs:
     - name: Resolve version
       id: version
       run: |
-        TAG="${GITHUB_REF#refs/tags/v}"
-        IFS='.' read -r major minor build revision <<< "$TAG"
+        TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+        IFS='.' read -r major minor build revision <<< "$TAG_VERSION"
         VERSION="${major:-0}.${minor:-0}.${build:-0}.${revision:-0}"
+        echo "TAG_VERSION=$TAG_VERSION" >> "$GITHUB_OUTPUT"
         echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
-        echo "Resolved $GITHUB_REF -> $VERSION"
+        echo "Resolved $GITHUB_REF -> $VERSION (tag: $TAG_VERSION)"
 
     - name: Build plugin package
       id: jprm
@@ -65,7 +66,7 @@ jobs:
     # value; fail loudly if that ever stops being true.
     - name: Verify package metadata
       run: |
-        TARGET_ABI=$(grep -Po '^targetAbi: *"\K[^"]+' build.yaml)
+        TARGET_ABI=$(sed -n 's/^targetAbi: *"\([^"]*\)".*/\1/p' build.yaml)
         unzip -p "${{ steps.jprm.outputs.artifact }}" meta.json \
           | jq -e --arg v "${{ steps.version.outputs.VERSION }}" --arg a "$TARGET_ABI" \
               '.version == $v and .targetAbi == $a and .imagePath == "thumb.png"' > /dev/null
@@ -80,14 +81,20 @@ jobs:
 
     - name: Prepare release notes
       id: release_notes
+      env:
+        TAG_VERSION: ${{ steps.version.outputs.TAG_VERSION }}
       run: |
-        RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${{ steps.version.outputs.VERSION }}.md"
+        # Notes are named after the tag (v3.0.0.md); fall back to the four-part form.
+        RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${TAG_VERSION}.md"
+        if [ ! -f "$RELEASE_NOTES_FILE" ]; then
+          RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${{ steps.version.outputs.VERSION }}.md"
+        fi
 
         if [ -f "$RELEASE_NOTES_FILE" ]; then
           echo "Release notes file found: $RELEASE_NOTES_FILE"
           cat "$RELEASE_NOTES_FILE" > release_body.md
         else
-          echo "Release notes file not found: $RELEASE_NOTES_FILE"
+          echo "Release notes file not found for v${TAG_VERSION}"
           echo "## Ambilight v${{ steps.version.outputs.VERSION }}" > release_body.md
           echo "" >> release_body.md
           echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md)." >> release_body.md
@@ -119,6 +126,7 @@ jobs:
     - name: Update manifest.json
       env:
         VERSION: ${{ steps.version.outputs.VERSION }}
+        TAG_VERSION: ${{ steps.version.outputs.TAG_VERSION }}
         CHECKSUM: ${{ steps.checksum.outputs.CHECKSUM }}
         ARTIFACT_NAME: ${{ steps.jprm.outputs.artifact }}
         TAG: ${{ github.ref_name }}
@@ -131,12 +139,16 @@ jobs:
         git checkout master
         git pull origin master
 
-        TARGET_ABI=$(grep -Po '^targetAbi: *"\K[^"]+' build.yaml)
+        TARGET_ABI=$(sed -n 's/^targetAbi: *"\([^"]*\)".*/\1/p' build.yaml)
         TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         ZIP_NAME=$(basename "$ARTIFACT_NAME")
         SOURCE_URL="https://github.com/${REPOSITORY}/releases/download/${TAG}/${ZIP_NAME}"
 
-        RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${VERSION}.md"
+        RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${TAG_VERSION}.md"
+        if [ ! -f "$RELEASE_NOTES_FILE" ]; then
+          RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${VERSION}.md"
+        fi
+
         if [ -f "$RELEASE_NOTES_FILE" ]; then
           CHANGELOG=$(jq -Rs . < "$RELEASE_NOTES_FILE")
         else
