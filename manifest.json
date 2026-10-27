@@ -9,7 +9,7 @@
     "imageUrl": "https://raw.githubusercontent.com/gabrielprat/jellyfin-ambilight/refs/heads/master/docs/thumb.png",
     "versions": [
       {
-        "version": "2.5.0",
+        "version": "2.5.0.0",
         "changelog": "# Release Notes - v2.5.0\n\n## Selectable Extraction Logic\n\nThe plugin now supports two per-zone color algorithms, selectable from the **Extraction logic** dropdown in settings:\n\n- **Sobel edge-weighted** (default) — The existing algorithm: Sobel edge detection + Gaussian center weighting with relative-luminance rescaling. Biases each zone toward high-contrast pixels and lifts dark zones, keeping the strip lively but making dark scenes read brighter than the picture.\n\n- **Linear-light averaging** — A plain unweighted mean of every pixel in the zone, taken in linear light via sRGB→linear lookup tables. A dark zone averages dark, and a black frame produces black LEDs. This more closely matches the behavior of HyperHDR and other ambilight software.\n\n### Tone curve automatically follows extraction method\n\nThe player now reads the extraction method from the AMb3 file header and applies the correct tone curve:\n- Linear-light files apply the user's gamma directly (`pow(x, gamma)`) and skip the mean-luminance pass.\n- Edge-weighted, AMb2, and older files keep the existing scene-adaptive lift.\n\n**No config change needed** — already-extracted files benefit without re-extraction.\n\n### Migration notes\n\n- Switching extraction method **requires re-extracting** existing items; previously extracted files are not converted.\n- The `AmbilightGamma` default of **2.2 will appear dark** for linear-light files (since gamma is applied directly instead of as a lift). Lower it to ~1.3-1.5 for a more picture-faithful result.\n\n## Per-Device Signal Delay\n\nA new signed **Signal Delay (ms)** setting on each WLED device mapping lets you fine-tune sync on a per-controller basis:\n- **Positive** values delay the ambilight data (LEDs react later).\n- **Negative** values advance it (LEDs react earlier).\n- The offset is applied on top of the global sync lead, so it works consistently across initial frame selection, seeks, and reported position.\n\n## Extraction Manager\n\nThe extraction table now includes a **Logic** column showing which extraction method produced each binary. The status API also exposes `ExtractionLogic` in its responses.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.5.0/jellyfin-plugin-ambilight_2.5.0.zip",
@@ -17,23 +17,15 @@
         "timestamp": "2026-07-27T13:36:20Z"
       },
       {
-        "version": "2.5.0",
-        "changelog": "See release notes at: https://github.com/gabrielprat/jellyfin-ambilight/releases/tag/v2.5.0",
-        "targetAbi": "10.10.0.0",
-        "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.5.0/jellyfin-plugin-ambilight_2.5.0.zip",
-        "checksum": "",
-        "timestamp": "2026-07-27T12:00:00Z"
-      },
-      {
-        "version": "2.4.2",
+        "version": "2.4.2.0",
         "changelog": "See release notes at: https://github.com/gabrielprat/jellyfin-ambilight/releases/tag/v2.4.2",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.4.2/jellyfin-plugin-ambilight_2.4.2.zip",
-        "checksum": "",
+        "checksum": "12356FF45F99FD26D350EE91CA636B48",
         "timestamp": "2026-07-22T10:00:00Z"
       },
       {
-        "version": "2.4.1",
+        "version": "2.4.1.0",
         "changelog": "See release notes at: https://github.com/gabrielprat/jellyfin-ambilight/releases/tag/v2.4.1",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.4.1/jellyfin-plugin-ambilight_2.4.1.zip",
@@ -41,7 +33,7 @@
         "timestamp": "2026-07-22T08:34:57Z"
       },
       {
-        "version": "2.4.0",
+        "version": "2.4.0.0",
         "changelog": "See release notes at: https://github.com/gabrielprat/jellyfin-ambilight/releases/tag/v2.4.0",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.4.0/jellyfin-plugin-ambilight_2.4.0.zip",
@@ -49,7 +41,7 @@
         "timestamp": "2026-07-22T08:21:26Z"
       },
       {
-        "version": "2.3.0",
+        "version": "2.3.0.0",
         "changelog": "# Release Notes - v2.3.0\n\n## Improved Bright Spot Colors\n\nPer-zone luminance scaling in the extractor now applies gamma correction (power 0.45) and clamps the scale factor to a safe range (0.25–3.0×). Individual color channels are also capped at 255 to prevent clipping. Bright areas of the video now produce vibrant but non-washed-out LED colors, and dark zones no longer get artificially boosted.\n\n## Scene Change Snapping During Playback\n\nWhen a hard cut is detected during playback (≥40% of LEDs changed between consecutive frames, configurable via **Scene Change Threshold**), the temporal smoothing accumulator resets immediately so LED colors snap to the new scene instead of blending from the previous one for several frames. EMA is also reset on seek for instant color recovery.\n\n## RGBW Documentation\n\nThe README now documents that RGBW LED strips are not supported through the plugin's UDP port 19446, and explains the protocol limitation for users with RGBW hardware.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.3.0/jellyfin-plugin-ambilight_2.3.0.zip",
@@ -57,7 +49,7 @@
         "timestamp": "2026-07-21T09:54:07Z"
       },
       {
-        "version": "2.2.0",
+        "version": "2.2.0.0",
         "changelog": "See release notes at: https://github.com/gabrielprat/jellyfin-ambilight/releases/tag/v2.2.0",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.2.0/jellyfin-plugin-ambilight_2.2.0.zip",
@@ -65,7 +57,7 @@
         "timestamp": "2026-07-20T14:23:45Z"
       },
       {
-        "version": "2.1.0",
+        "version": "2.1.0.0",
         "changelog": "See release notes at: https://github.com/gabrielprat/jellyfin-ambilight/releases/tag/v2.1.0",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.1.0/jellyfin-plugin-ambilight_2.1.0.zip",
@@ -73,7 +65,7 @@
         "timestamp": "2026-07-20T10:29:49Z"
       },
       {
-        "version": "2.0.0",
+        "version": "2.0.0.0",
         "changelog": "# Release Notes - v2.0.0\n\n## AMb3 Binary Format\n\nNew compressed binary format that dramatically reduces storage requirements while improving seeking performance.\n\n- **Deflate compression** — 30-50% smaller files on top of encoding gains\n- **Delta encoding** — only changed LEDs are stored between keyframes (every ~2 seconds)\n- **RLE deduplication** — static scenes (credits, pauses) stored once with a repeat count\n- **Chunk-based structure** — frames grouped into independently compressed chapters\n- **Seeking index** — instant seeking in long files via timestamp→offset index at EOF\n- **Scene change detection** — hard cuts automatically trigger keyframes to maintain accuracy\n- **Per-zone brightness** — LED brightness now reflects the actual brightness of each zone in the source video\n\n**Typical file sizes:**\n| Content type | AMb2 | AMb3 |\n|---|---|---|\n| Typical movie (2h) | ~850 MB | 200-350 MB |\n| Dialogue/slow | ~850 MB | 150-250 MB |\n| Anime (limited animation) | ~850 MB | 100-200 MB |\n\n## Backward Compatibility\n\n- Existing AMb2 binary files continue to work unchanged\n- Plugin automatically detects and plays both AMb2 (legacy) and AMb3 files\n- No migration required — new extractions use AMb3, old files play as before\n\n## Extraction Pipeline\n\n- Rewrote extraction to produce AMb3 format with compression and delta encoding\n- Added scene change detection to force keyframes on hard cuts\n- Added per-zone brightness scaling based on source video luminance\n- Improved atomic file writes to prevent corruption on crash\n\n## Playback Pipeline\n\n- Added AMb3 format detection and decompression\n- Maintained full backward compatibility with AMb2 format\n- Improved seeking accuracy with index-based lookup\n- Added graceful handling of format detection\n\n## Storage\n\n- Added `BinaryFormat` field to metadata to track AMb2 vs AMb3 files\n- Added runtime format detection for files without metadata\n- Improved stuck extraction cleanup on startup\n\n## Simplified Visual Settings\n\nRemoved settings that caused blue color tint in dark scenes with no practical benefit:\n\n- **Removed Brightness target** — automatic brightness normalization was amplifying blue bias in dark scenes\n- **Removed Min LED brightness** — non-zero floor forced LEDs to emit light, tinting dark scenes blue\n- **Removed Red/Green/Blue boost** — dependent on Min LED brightness, removed together\n- **Smoothing window default changed** from 0.12s to 0.06s for more responsive color transitions\n\nVisual tuning now consists of: gamma (global + per-channel), saturation, and smoothing — all color-neutral settings that don't introduce bias in dark content.\n\n## Bug Fixes\n\n- Fixed plugin icon display in Jellyfin\n- Fixed AMb3 header size calculation (96→85 bytes)\n- Fixed chunk count backpatch offset (53→49)\n- Fixed player seeking before header read\n- Added missing RLE chunk type handling in player\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v2.0.0/jellyfin-plugin-ambilight_2.0.0.zip",
@@ -81,7 +73,7 @@
         "timestamp": "2026-07-20T09:20:32Z"
       },
       {
-        "version": "1.8.0",
+        "version": "1.8.0.0",
         "changelog": "# Release Notes - v1.8.0\n\n## Concurrent Extractions\n\n- Added a new setting to allow multiple concurrent extractions. You can now extract up to 10 videos simultaneously.\n- Removed sequential limitations in scheduled background task.\n\n## Extraction Management\n\n- Added a **Stop** button during active extractions in the plugin configuration UI.\n- Users can now explicitly cancel an ongoing extraction for an item, returning it to pending status.\n- Implemented queueing mechanics: excess extractions triggered manually will be queued and show up with a `Queued` status until a concurrency slot frees up. Queued items can also be cancelled.\n- Added **Extract Pending** buttons to the series and season headers in the Extraction Manager to quickly queue an entire series or season.\n- Improved Extraction Manager layout: episodes are now explicitly identified with their number in a left-aligned column for better readability within a series hierarchy. Also removed redundant \"Movie\" labels.\n- **Fix**: Resolved an issue where videos stuck in `Extracting` or `Queued` state due to a server restart were permanently frozen. They now correctly revert to `Pending` on startup.\n\n## General Improvements\n\n- Minor backend UI fixes and logic changes to correctly handle multiple in-flight extraction tokens.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.8.0/jellyfin-plugin-ambilight_1.8.0.zip",
@@ -89,7 +81,7 @@
         "timestamp": "2026-03-12T16:36:26Z"
       },
       {
-        "version": "1.7.0",
+        "version": "1.7.0.0",
         "changelog": "# Release Notes - v1.7.0\n\n## RGBW Removal And RGB-Only Pipeline\n\n- Removed the RGBW extraction configuration option from plugin settings.\n- Removed RGBW extraction and playback code paths from the runtime.\n- AMb2 generation and playback now use RGB (3-channel) only for consistent color behavior.\n\n## Documentation Update\n\n- Clarified `Input Position` mapping in README from viewer perspective:\n  - `0` is the top-left LED.\n  - `1` is the next LED to the right.\n  - Continue clockwise around the screen.\n\n## Runtime Configuration Reliability\n\n- Updated runtime services to always consume the latest plugin configuration without requiring a Jellyfin restart.\n- Device mappings, extraction queue settings, extraction LED counts, hardware acceleration, auto-extraction toggles, and playback tuning now refresh correctly from current saved config.\n\n## Extraction Metadata In Item JSON\n\n- Added extraction provenance fields in item metadata JSON files:\n  - Plugin version used to extract the binary.\n  - Extraction LED layout used for that extraction (`top`, `right`, `bottom`, `left`).\n- This improves traceability/control when validating existing binaries after config changes or upgrades.\n\n## Extraction Manager UX\n\n- Removed JavaScript alert popups for item-level extract/delete actions in favor of non-blocking feedback.\n\n## Installation & Upgrade\n\n- For installation and upgrade instructions, see `INSTALLATION.md`.\n- After upgrading:\n  1. Restart Jellyfin once to load plugin `1.7.0`.\n  2. Re-extract content that was previously generated with RGBW enabled.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.7.0/jellyfin-plugin-ambilight_1.7.0.zip",
@@ -97,7 +89,7 @@
         "timestamp": "2026-03-09T08:51:01Z"
       },
       {
-        "version": "1.6.4",
+        "version": "1.6.4.0",
         "changelog": "# Release Notes - v1.6.4\n\n## Color Fidelity Fix (Extractor + Player)\n\n- Fixed a regression that could produce washed/white-blue ambilight output and poor color matching with video content.\n- Player color processing is now hardened to avoid invalid channel math:\n  - per-channel gamma values are clamped to a safe range\n  - saturation-adjusted channels are clamped before power/gamma transforms\n- Extractor FFmpeg filter chain now explicitly enforces RGB conversion (`format=rgb24`) before raw frame output for more consistent colors across hardware/driver combinations.\n\n## Manifest Cleanup\n\n- Removed duplicate historical version entries from `manifest.json` so each release version appears once.\n\n## Installation & Upgrade\n\n- For installation and upgrade instructions, see `INSTALLATION.md`.\n- After upgrading:\n  1. Restart Jellyfin once to load plugin `1.6.4`.\n  2. Re-test playback on content that previously looked white/blueish.\n  3. If you still see stale color data on old binaries, re-run extraction for affected items from the Manager tab.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.6.4/jellyfin-plugin-ambilight_1.6.4.zip",
@@ -105,7 +97,7 @@
         "timestamp": "2026-03-07T09:01:31Z"
       },
       {
-        "version": "1.6.3",
+        "version": "1.6.3.0",
         "changelog": "# Release Notes - v1.6.3\n\n## Installed Plugin Image Endpoint Fix\n\n- Fixed installed plugin thumbnail resolution for Jellyfin's local image endpoint:\n  `/Plugins/b3f6b4c70a3d4bd4a7e3c8d5a0a1e3f0/{version}/Image`.\n- Release packages now consistently include both:\n  - `thumb.png`\n  - `meta.json` with `imagePath: \"thumb.png\"`.\n\n## Workflow Packaging Consistency\n\n- Updated release/build packaging logic to ensure image metadata and file are always shipped together.\n- Prevents future releases from publishing without the required thumbnail files.\n\n## Installation & Upgrade\n\n- For installation and upgrade instructions, see `INSTALLATION.md`.\n- After upgrading:\n  1. Restart Jellyfin once to load plugin `1.6.3`.\n  2. Hard refresh the Jellyfin web UI so cached plugin images are refreshed.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.6.3/jellyfin-plugin-ambilight_1.6.3.zip",
@@ -113,7 +105,7 @@
         "timestamp": "2026-03-06T16:52:13Z"
       },
       {
-        "version": "1.6.2",
+        "version": "1.6.2.0",
         "changelog": "# Release Notes - v1.6.2\n\n## Plugin Thumbnail Fix\n\n- Fixed plugin packaging so `thumb.png` is always included in release zip assets.\n- Added `meta.json` to release packages with `imagePath: \"thumb.png\"` so Jellyfin's installed plugin image endpoint can resolve the local image correctly.\n- This ensures Jellyfin can display the plugin image on installed/active plugin cards.\n\n## Build/Release Workflow Hardening\n\n- Updated both GitHub workflows that produce release packages to include `thumb.png`.\n- Workflows now generate `meta.json` and fail early if the thumbnail is missing, preventing broken image releases.\n\n## Installation & Upgrade\n\n- For installation and upgrade instructions, see `INSTALLATION.md`.\n- After upgrading:\n  1. Restart Jellyfin once to load plugin `1.6.2`.\n  2. Hard refresh the Jellyfin web UI so cached plugin images are refreshed.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.6.2/jellyfin-plugin-ambilight_1.6.2.zip",
@@ -121,7 +113,7 @@
         "timestamp": "2026-03-06T13:07:18Z"
       },
       {
-        "version": "1.6.0",
+        "version": "1.6.0.0",
         "changelog": "# Release Notes - v1.6.0\n\n## Sequential Auto-Extraction For New Library Items\n\n- New videos added to non-excluded libraries are now extracted one by one.\n- Parallel extraction runs are now serialized through a single extraction gate to reduce CPU spikes on the Jellyfin host.\n- This also prevents overlap between automatic, manual, and scheduled extraction triggers.\n\n## Extraction Manager Disk Usage Counter\n\n- The Extraction Manager now shows the total disk space used by extracted `.bin` files.\n- The total appears to the right of the status counters.\n- Size is automatically formatted using the best-fitting unit (`MB`, `GB`, or `TB`).\n\n## Versioning\n\n- Plugin version bumped to `1.6.0`.\n- Manifest metadata now includes the `1.6.0` release entry.\n\n## Installation & Upgrade\n\n- For installation and upgrade instructions, see `INSTALLATION.md`.\n- After upgrading:\n  1. Restart Jellyfin once to load plugin `1.6.0`.\n  2. Add a couple of new videos and verify extraction proceeds sequentially (one item at a time) in logs.\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.6.0/jellyfin-plugin-ambilight_1.6.0.zip",
@@ -129,7 +121,7 @@
         "timestamp": "2026-03-06T09:39:48Z"
       },
       {
-        "version": "1.5.9",
+        "version": "1.5.9.0",
         "changelog": "# Release Notes - v1.5.9\n\n## ⏸ Improved Pause Behavior\n\n- When playback is paused, Ambilight now continuously re-sends the last video frame to WLED so the LEDs stay frozen on that frame instead of reverting to the controller’s previous effect or color.\n- On resume, playback timing is preserved so Ambilight continues in sync with the video.\n\n## 📦 Installation & Upgrade\n\n- For installation and upgrade instructions, see the `INSTALLATION.md` file in the repository.\n- After upgrading:\n  1. Restart Jellyfin once to load the new plugin version.\n  2. Verify that pausing/resuming playback now keeps Ambilight locked to the paused frame and resumes smoothly in sync.\n\n",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.5.9/jellyfin-plugin-ambilight_1.5.9.zip",
@@ -137,7 +129,7 @@
         "timestamp": "2026-03-03T13:01:40Z"
       },
       {
-        "version": "1.5.8",
+        "version": "1.5.8.0",
         "changelog": "# Release Notes - v1.5.8\n\n## Live Device Mapping Reload\n\n- Device mappings created or edited in the Ambilight settings UI now take effect **immediately**, without requiring a Jellyfin restart.\n- The playback service reads the latest plugin configuration on each playback event.\n\nSee the `INSTALLATION.md` file in the repository.",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.5.8/jellyfin-plugin-ambilight_1.5.8.zip",
@@ -145,7 +137,7 @@
         "timestamp": "2026-02-27T19:13:48Z"
       },
       {
-        "version": "1.5.7",
+        "version": "1.5.7.0",
         "changelog": "# Release Notes - v1.5.7\n\n## Device Mapping Matching Fix\n\n- Device mappings now store the human-readable device name instead of Jellyfin internal device ID.\n- Playback matching uses session DeviceName so mappings remain stable.\n\nSee `INSTALLATION.md` for install/upgrade.",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.5.7/jellyfin-plugin-ambilight_1.5.7.zip",
@@ -153,7 +145,7 @@
         "timestamp": "2026-02-27T14:20:51Z"
       },
       {
-        "version": "1.5.6",
+        "version": "1.5.6.0",
         "changelog": "# Release Notes - v1.5.6\n\n## Fixed Pause/Resume Ambilight Sync\n\n- Ambilight pauses and resumes in sync with Jellyfin playback.\n\n## Scheduled Task Retries Failed Extractions\n\n- Extract Pending Ambilight Data now includes previously failed items for retry.\n\n## Improved Debug Logging for Device Mappings\n\n- Debug logs show device ID and mappings at play start.\n\nSee `INSTALLATION.md` for install/upgrade.",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.5.6/jellyfin-plugin-ambilight_1.5.6.zip",
@@ -161,7 +153,7 @@
         "timestamp": "2026-02-27T10:25:55Z"
       },
       {
-        "version": "1.5.5",
+        "version": "1.5.5.0",
         "changelog": "# Release Notes - v1.5.5\n\n## Hardware Acceleration Fix - Reverted to v1.4.2\n\n- Fixes VAAPI/QSV issues from v1.5.0-v1.5.4 by reverting to v1.4.2 approach.\n- Hardware acceleration for decoding only; simple scale filter chain.\n\nSee `INSTALLATION.md` for install/upgrade.",
         "targetAbi": "10.10.0.0",
         "sourceUrl": "https://github.com/gabrielprat/jellyfin-ambilight/releases/download/v1.5.5/jellyfin-plugin-ambilight_1.5.5.zip",
