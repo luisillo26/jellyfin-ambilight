@@ -1,75 +1,20 @@
-name: Build Plugin
+name: '🏗️ Build Plugin'
 
 on:
   push:
-    branches: [ master, main ]
+    branches:
+      - master
+      - devel
+    paths-ignore:
+      - '**/*.md'
   pull_request:
-    branches: [ master, main ]
-  release:
-    types: [ published ]
+    branches:
+      - master
+      - devel
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
-    
-    - name: Restore dependencies
-      run: dotnet restore
-    
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
-    
-    - name: Create release package
-      if: github.event_name == 'release'
-      run: |
-        mkdir -p release/Jellyfin.Plugin.Ambilight
-        cp bin/Release/net8.0/Jellyfin.Plugin.Ambilight.dll release/Jellyfin.Plugin.Ambilight/
-        cp bin/Release/net8.0/Jellyfin.Plugin.Ambilight.pdb release/Jellyfin.Plugin.Ambilight/ || true
-        if [ -f bin/Release/net8.0/thumb.png ]; then
-          cp bin/Release/net8.0/thumb.png release/Jellyfin.Plugin.Ambilight/thumb.png
-        elif [ -f docs/thumb.png ]; then
-          cp docs/thumb.png release/Jellyfin.Plugin.Ambilight/thumb.png
-        else
-          echo "ERROR: thumb.png not found in build output or docs/" >&2
-          exit 1
-        fi
-        TAG="${{ github.event.release.tag_name }}"
-        VERSION="${TAG#v}"
-        if [[ "$VERSION" == *.*.*.* ]]; then
-          FULL_VERSION="$VERSION"
-        else
-          FULL_VERSION="${VERSION}.0"
-        fi
-        cat > release/Jellyfin.Plugin.Ambilight/meta.json <<EOF
-        {
-          "guid": "b3f6b4c7-0a3d-4bd4-a7e3-c8d5a0a1e3f0",
-          "name": "Ambilight",
-          "description": "Transform your Jellyfin viewing experience with synchronized ambient lighting via WLED",
-          "overview": "Automatic ambilight effects for movies and TV shows with real-time WLED control",
-          "owner": "Gabriel Prat",
-          "category": "General",
-          "imagePath": "thumb.png",
-          "version": "$FULL_VERSION",
-          "targetAbi": "10.10.0.0"
-        }
-        EOF
-        cd release
-        zip -r jellyfin-plugin-ambilight_${{ github.event.release.tag_name }}.zip Jellyfin.Plugin.Ambilight
-    
-    - name: Upload Release Asset
-      if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./release/jellyfin-plugin-ambilight_${{ github.event.release.tag_name }}.zip
-        asset_name: jellyfin-plugin-ambilight_${{ github.event.release.tag_name }}.zip
-        asset_content_type: application/zip
+  call:
+    uses: jellyfin/jellyfin-meta-plugins/.github/workflows/build.yaml@master

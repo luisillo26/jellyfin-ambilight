@@ -4,9 +4,9 @@
 
 | Component | Version |
 |---|---|
-| Target framework | .NET 8 (`net8.0`) |
-| Language | C# 12 (nullable reference types, implicit usings) |
-| Jellyfin SDK | `10.10.*` (pinned, `PrivateAssets="All"`) |
+| Target framework | .NET 10 (`net10.0`) |
+| Language | C# 14 (nullable reference types, implicit usings) |
+| Jellyfin SDK | `12.0.0` (pinned, `ExcludeAssets="runtime"`), `targetAbi` `12.0.0.0` |
 | NuGet restore | nuget.org only, no lockfile |
 
 ## Project structure
@@ -16,7 +16,7 @@
 - **Embedded resources:** `Configuration/configPage.html` (config UI)
 - **License:** GPL-3.0-or-later
 
-## Key dependencies (all shipped as PrivateAssets)
+## Key dependencies (none shipped: `ExcludeAssets="runtime"`)
 
 | Package | Purpose |
 |---|---|

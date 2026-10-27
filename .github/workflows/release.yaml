@@ -11,166 +11,154 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
-    
-    - name: Get version from tag
+        dotnet-version: '10.0.x'
+
+    # Normalise the tag to the four-part form Jellyfin compares against
+    # (PluginInfo.Version is always major.minor.build.revision).
+    - name: Resolve version
       id: version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-    
-    - name: Restore dependencies
-      run: dotnet clean --configuration Release 2>&1 && dotnet restore
-    
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
-    
-    - name: Create release package
       run: |
-        mkdir -p release/Jellyfin.Plugin.Ambilight
-        cp bin/Release/net8.0/Jellyfin.Plugin.Ambilight.dll release/Jellyfin.Plugin.Ambilight/
-        cp bin/Release/net8.0/Jellyfin.Plugin.Ambilight.pdb release/Jellyfin.Plugin.Ambilight/ || true
-        if [ -f bin/Release/net8.0/thumb.png ]; then
-          cp bin/Release/net8.0/thumb.png release/Jellyfin.Plugin.Ambilight/thumb.png
-        elif [ -f docs/thumb.png ]; then
-          cp docs/thumb.png release/Jellyfin.Plugin.Ambilight/thumb.png
-        else
-          echo "ERROR: thumb.png not found in build output or docs/" >&2
-          exit 1
-        fi
-        VERSION="${{ steps.version.outputs.VERSION }}"
-        if [[ "$VERSION" == *.*.*.* ]]; then
-          FULL_VERSION="$VERSION"
-        else
-          FULL_VERSION="${VERSION}.0"
-        fi
-        cat > release/Jellyfin.Plugin.Ambilight/meta.json <<EOF
-        {
-          "guid": "b3f6b4c7-0a3d-4bd4-a7e3-c8d5a0a1e3f0",
-          "name": "Ambilight",
-          "description": "Transform your Jellyfin viewing experience with synchronized ambient lighting via WLED",
-          "overview": "Automatic ambilight effects for movies and TV shows with real-time WLED control",
-          "owner": "Gabriel Prat",
-          "category": "General",
-          "imagePath": "thumb.png",
-          "version": "$FULL_VERSION",
-          "targetAbi": "10.10.0.0"
-        }
-        EOF
-        cd release
-        zip -r jellyfin-plugin-ambilight_${{ steps.version.outputs.VERSION }}.zip Jellyfin.Plugin.Ambilight
-    
+        TAG="${GITHUB_REF#refs/tags/v}"
+        IFS='.' read -r major minor build revision <<< "$TAG"
+        VERSION="${major:-0}.${minor:-0}.${build:-0}.${revision:-0}"
+        echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "Resolved $GITHUB_REF -> $VERSION"
+
+    - name: Build plugin package
+      id: jprm
+      uses: oddstr13/jellyfin-plugin-repository-manager@v1.1.1
+      with:
+        version: ${{ steps.version.outputs.VERSION }}
+        output: ./artifacts
+
+    # JPRM writes "image" into meta.json, but Jellyfin's plugin manifest reader
+    # only looks at "imagePath", so a manual install (no catalog refresh) would
+    # have no icon at all.
+    - name: Add imagePath to package metadata
+      run: |
+        python3 - "${{ steps.jprm.outputs.artifact }}" <<'PY'
+        import json, os, shutil, sys, zipfile
+
+        path = sys.argv[1]
+        tmp = path + ".tmp"
+        with zipfile.ZipFile(path) as zin, zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == "meta.json":
+                    meta = json.loads(data)
+                    if meta.get("image") and not meta.get("imagePath"):
+                        meta["imagePath"] = meta["image"]
+                    data = json.dumps(meta, indent=4, sort_keys=True).encode()
+                zout.writestr(item, data)
+        shutil.move(tmp, path)
+        print("meta.json imagePath set")
+        PY
+
+    # JPRM writes meta.json, the assembly version and the zip name from the same
+    # value; fail loudly if that ever stops being true.
+    - name: Verify package metadata
+      run: |
+        TARGET_ABI=$(grep -Po '^targetAbi: *"\K[^"]+' build.yaml)
+        unzip -p "${{ steps.jprm.outputs.artifact }}" meta.json \
+          | jq -e --arg v "${{ steps.version.outputs.VERSION }}" --arg a "$TARGET_ABI" \
+              '.version == $v and .targetAbi == $a and .imagePath == "thumb.png"' > /dev/null
+        echo "Package reports ${{ steps.version.outputs.VERSION }} for target ABI $TARGET_ABI"
+
     - name: Calculate checksum
       id: checksum
       run: |
-        cd release
-        CHECKSUM=$(md5sum jellyfin-plugin-ambilight_${{ steps.version.outputs.VERSION }}.zip | awk '{print toupper($1)}')
-        echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
+        CHECKSUM=$(md5sum "${{ steps.jprm.outputs.artifact }}" | awk '{print toupper($1)}')
+        echo "CHECKSUM=$CHECKSUM" >> "$GITHUB_OUTPUT"
         echo "Checksum: $CHECKSUM"
-    
+
     - name: Prepare release notes
       id: release_notes
       run: |
         RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${{ steps.version.outputs.VERSION }}.md"
-        
+
         if [ -f "$RELEASE_NOTES_FILE" ]; then
           echo "Release notes file found: $RELEASE_NOTES_FILE"
-          
-          # Create release body with markdown content from file
           cat "$RELEASE_NOTES_FILE" > release_body.md
-          
-          # Append installation instructions
-          echo "" >> release_body.md
-          echo "---" >> release_body.md
-          echo "" >> release_body.md
-          echo "## Installation" >> release_body.md
-          echo "" >> release_body.md
-          echo "1. Download the \`.zip\` file below" >> release_body.md
-          echo "2. Extract it to your Jellyfin plugins folder: \`/config/plugins/Ambilight/\`" >> release_body.md
-          echo "3. Restart Jellyfin" >> release_body.md
-          echo "" >> release_body.md
-          echo "**MD5 Checksum:** \`${{ steps.checksum.outputs.CHECKSUM }}\`" >> release_body.md
-          echo "" >> release_body.md
-          echo "See [README.md](https://github.com/${{ github.repository }}/blob/master/README.md) for detailed installation and configuration instructions." >> release_body.md
         else
           echo "Release notes file not found: $RELEASE_NOTES_FILE"
-          echo "Using default release body"
-          
-          echo "## Jellyfin Ambilight Plugin v${{ steps.version.outputs.VERSION }}" > release_body.md
+          echo "## Ambilight v${{ steps.version.outputs.VERSION }}" > release_body.md
           echo "" >> release_body.md
-          echo "## Installation" >> release_body.md
-          echo "" >> release_body.md
-          echo "1. Download the \`.zip\` file below" >> release_body.md
-          echo "2. Extract it to your Jellyfin plugins folder: \`/config/plugins/Ambilight/\`" >> release_body.md
-          echo "3. Restart Jellyfin" >> release_body.md
-          echo "" >> release_body.md
-          echo "**MD5 Checksum:** \`${{ steps.checksum.outputs.CHECKSUM }}\`" >> release_body.md
-          echo "" >> release_body.md
-          echo "See [README.md](https://github.com/${{ github.repository }}/blob/master/README.md) for detailed installation and configuration instructions." >> release_body.md
+          echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/master/CHANGELOG.md)." >> release_body.md
         fi
-    
+
+        echo "" >> release_body.md
+        echo "---" >> release_body.md
+        echo "" >> release_body.md
+        echo "## Installation" >> release_body.md
+        echo "" >> release_body.md
+        echo "Add this repository to Jellyfin under **Dashboard -> Plugins -> Repositories**:" >> release_body.md
+        echo "" >> release_body.md
+        echo '```' >> release_body.md
+        echo "https://raw.githubusercontent.com/${{ github.repository }}/master/manifest.json" >> release_body.md
+        echo '```' >> release_body.md
+        echo "" >> release_body.md
+        echo "Then install **Ambilight** from the catalog and restart Jellyfin." >> release_body.md
+        echo "" >> release_body.md
+        echo "**MD5 Checksum:** \`${{ steps.checksum.outputs.CHECKSUM }}\`" >> release_body.md
+
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
-        files: release/jellyfin-plugin-ambilight_${{ steps.version.outputs.VERSION }}.zip
+        files: ${{ steps.jprm.outputs.artifact }}
         body_path: release_body.md
-        draft: false
-        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Install jq
-      run: sudo apt-get update && sudo apt-get install -y jq
-    
-    - name: Commit and push manifest update
+
+    - name: Update manifest.json
+      env:
+        VERSION: ${{ steps.version.outputs.VERSION }}
+        CHECKSUM: ${{ steps.checksum.outputs.CHECKSUM }}
+        ARTIFACT_NAME: ${{ steps.jprm.outputs.artifact }}
+        TAG: ${{ github.ref_name }}
+        REPOSITORY: ${{ github.repository }}
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        
-        # Fetch and checkout master branch
+
         git fetch origin master
         git checkout master
         git pull origin master
-        
-        # Prepend new version to manifest.json (keep all previous versions; avoid duplicates)
+
+        TARGET_ABI=$(grep -Po '^targetAbi: *"\K[^"]+' build.yaml)
         TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        
-        RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${{ steps.version.outputs.VERSION }}.md"
+        ZIP_NAME=$(basename "$ARTIFACT_NAME")
+        SOURCE_URL="https://github.com/${REPOSITORY}/releases/download/${TAG}/${ZIP_NAME}"
+
+        RELEASE_NOTES_FILE="release-notes/RELEASE_NOTES_v${VERSION}.md"
         if [ -f "$RELEASE_NOTES_FILE" ]; then
-          echo "Found release notes: $RELEASE_NOTES_FILE"
-          CHANGELOG=$(cat "$RELEASE_NOTES_FILE" | jq -Rs .)
+          CHANGELOG=$(jq -Rs . < "$RELEASE_NOTES_FILE")
         else
-          echo "Release notes not found: $RELEASE_NOTES_FILE, using fallback"
-          CHANGELOG="\"See release notes at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}\""
+          CHANGELOG=$(printf 'See release notes at: https://github.com/%s/releases/tag/%s' "$REPOSITORY" "$TAG" | jq -Rs .)
         fi
-        
-        # Build new version object and prepend to existing versions (do not overwrite or duplicate)
-        jq --arg version "${{ steps.version.outputs.VERSION }}" \
-           --arg checksum "${{ steps.checksum.outputs.CHECKSUM }}" \
-           --arg timestamp "$TIMESTAMP" \
-           --arg sourceUrl "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/jellyfin-plugin-ambilight_${{ steps.version.outputs.VERSION }}.zip" \
+
+        jq --arg version "$VERSION" \
            --argjson changelog "$CHANGELOG" \
-           --arg targetAbi "10.10.0.0" \
-           '.[0].versions = [
-             { version: $version, changelog: $changelog, targetAbi: $targetAbi, sourceUrl: $sourceUrl, checksum: $checksum, timestamp: $timestamp }
-           ] + .[0].versions | unique_by(.version)' \
+           --arg targetAbi "$TARGET_ABI" \
+           --arg sourceUrl "$SOURCE_URL" \
+           --arg checksum "$CHECKSUM" \
+           --arg timestamp "$TIMESTAMP" \
+           '.[0].versions = [{ version: $version, changelog: $changelog, targetAbi: $targetAbi, sourceUrl: $sourceUrl, checksum: $checksum, timestamp: $timestamp }] + [.[0].versions[] | select(.version != $version)]' \
            manifest.json > manifest.json.tmp
         mv manifest.json.tmp manifest.json
-        
-        echo "Manifest updated on master branch (new version prepended)"
-        
+
         git add manifest.json
-        
-        # Check if there are changes to commit
+
         if git diff --staged --quiet; then
-          echo "No changes to manifest.json"
+          echo "manifest.json already lists $VERSION"
           exit 0
         fi
-        
-        git commit -m "Auto-update manifest.json for v${{ steps.version.outputs.VERSION }}"
+
+        git commit -m "Auto-update manifest.json for v${VERSION}"
         git push origin master

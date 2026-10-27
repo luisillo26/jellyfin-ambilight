@@ -1,73 +1,97 @@
 # Publishing Guide
 
-This guide explains how to publish new releases of the Jellyfin Ambilight Plugin.
+This plugin is packaged with [JPRM](https://github.com/oddstr13/jellyfin-plugin-repository-manager),
+the tool used by the official Jellyfin plugin template. `build.yaml` is the single source of
+truth for the plugin's identity, version and target ABI.
 
 ## Prerequisites
 
-- Push access to the GitHub repository
-- Git configured locally
-- .NET 8 SDK installed
+- Push access to the repository that serves `manifest.json`
+  (currently `luisillo26/jellyfin-ambilight`)
+- .NET 10 SDK for local builds
+- Python 3 with `jprm` for local packaging (`pip install jprm`); CI installs it itself
 
-## Release Process
+## Why versions must have four parts
 
-### 1. Update Version Numbers
+Jellyfin stores the assembly version (`2.5.0.0`) in `PluginInfo.Version` and looks up the
+plugin image, the enable/disable switch and uninstall by that exact value. If the catalog
+publishes `2.5.0` instead, `/Plugins/{id}/2.5.0.0/Image` and `/Plugins/{id}/2.5.0.0/Disable`
+return 404: no icon, dead toggle, nothing in the server log.
 
-Update the version in these files:
+JPRM reads `version` from `build.yaml`, rewrites `Version`, `AssemblyVersion` and
+`FileVersion` in `Directory.Build.props` and the project, and writes the same four-part value
+into the package `meta.json`, so the two can no longer disagree. Do not hand-edit version
+numbers in `manifest.json`.
 
-1. **Jellyfin.Plugin.Ambilight.csproj**
-   ```xml
-   <AssemblyVersion>1.7.0</AssemblyVersion>
-   <FileVersion>1.7.0</FileVersion>
+## Release process
+
+1. **Note the changes**
+
+   Add a new section to `CHANGELOG.md` and create `release-notes/RELEASE_NOTES_vX.Y.Z.md`.
+   The release workflow uses that file as the release body and as the catalog changelog.
+
+2. **Bump `build.yaml`** (optional but keeps local builds honest)
+
+   ```yaml
+   version: "3.1.0.0"
    ```
 
-2. **CHANGELOG.md**
-   - Add a new section for the version
-   - List all changes since last release
+   The tag always wins at release time: the workflow passes the tag to JPRM as `--version`
+   and normalises it to four parts, so `v3.1.0` and `v3.1.0.0` produce the same package.
 
-### 2. Commit Changes
+3. **Commit and tag**
+
+   ```bash
+   git add .
+   git commit -m "release: v3.1.0"
+   git push origin master
+   git tag v3.1.0
+   git push origin v3.1.0
+   ```
+
+4. **What the workflow does** (`.github/workflows/release.yaml`)
+
+   - builds and packages with JPRM (`ambilight_3.1.0.0.zip` + `meta.json`)
+   - verifies `meta.json` reports the tag version and `build.yaml`'s `targetAbi`, and fails otherwise
+   - creates the GitHub release with the zip and the release notes
+   - prepends the new version to `manifest.json` and pushes it to `master`
+
+## Building a package locally
 
 ```bash
-git add .
-git commit -m "Release v1.0.0.0"
-git push origin master
+dotnet restore && dotnet build --no-restore --configuration Release   # compile check
+pip install jprm
+mkdir -p artifacts
+jprm plugin build . -o ./artifacts --version 3.0.0.0
 ```
 
-### 3. Create and Push Tag
+The result is `artifacts/ambilight_3.0.0.0.zip` containing the DLL, `thumb.png` and
+`meta.json` at the archive root. JPRM edits `Directory.Build.props` in place, so check
+`git status` afterwards.
 
-```bash
-git tag v1.0.0.0
-git push origin v1.0.0.0
-```
+JPRM writes `"image"` into `meta.json`, but Jellyfin's manifest reader only reads
+`"imagePath"`, so a locally built zip has no icon until a catalog refresh downloads it. The
+release workflow injects `"imagePath": "thumb.png"` into `meta.json` before uploading, which
+is why the released asset shows the icon even when installed manually.
 
-This will automatically trigger the GitHub Actions workflow that:
-- Builds the plugin
-- Creates a release package (zip file)
-- Calculates the MD5 checksum
-- Creates a GitHub release
-- Uploads the package as a release asset
+## Compatibility rules
 
-### 4. Manifest.json is Updated Automatically
+| Plugin build | targetAbi | Runs on |
+|---|---|---|
+| 3.x | `12.0.0.0` | Jellyfin 12.x |
+| 2.5.0.0 | `10.10.0.0` | Jellyfin 10.10 / 10.11 |
 
-The manifest.json file is **automatically updated** as part of the release workflow. When you push a tag, the workflow will:
-
-1. Build the plugin
-2. Create the release with the zip file
-3. Calculate the MD5 checksum
-4. **Prepend** the new version to the `versions` array in manifest.json (with changelog from `release-notes/RELEASE_NOTES_vX.Y.Z.md`), keeping all previous versions
-5. Commit and push the changes
-
-**No manual action required!** Do not manually add a new version to manifest.json before releasing—the workflow adds it and deduplicates by version so the same version is never listed twice.
-
-## Repository URL
-
-Users can add your plugin repository to Jellyfin:
-
-**Repository URL:** `https://raw.githubusercontent.com/gabrielprat/jellyfin-ambilight/master/manifest.json`
+Both stay in `manifest.json`: Jellyfin installs the newest version whose `targetAbi` is not
+greater than the server version, so 10.x servers keep getting 2.5.0.0 while 12.x servers get 3.x.
 
 ## Verification
 
-After publishing, verify:
-1. Release appears on GitHub releases page
-2. Zip file is attached to release
-3. Manifest.json is accessible at the raw GitHub URL
-4. Plugin can be installed from the repository in Jellyfin
+After publishing, check that the plugin is actually reachable:
+
+```bash
+curl -o /dev/null -w '%{http_code}\n' \
+  http://<server>:8096/Plugins/b3f6b4c7-0a3d-4bd4-a7e3-c8d5a0a1e3f0/<version>/Image
+```
+
+`200` means the installed manifest version and the assembly version agree. `404` means they
+do not — the icon and the enable/disable switch will not work until they do.

@@ -24,19 +24,20 @@ docker run -v /path/to/ambilight-data:/config/data/ambilight jellyfin/jellyfin
 2. Click **Add Repository**
 3. Enter:
    - **Repository Name**: `Ambilight`
-   - **Repository URL**: `https://raw.githubusercontent.com/gabrielprat/jellyfin-ambilight/refs/heads/master/manifest.json`
+   - **Repository URL**: `https://raw.githubusercontent.com/luisillo26/jellyfin-ambilight/master/manifest.json`
 4. Save, open **Catalog**, find **Ambilight**, and click **Install**
 5. Restart Jellyfin
 
+> This release targets **Jellyfin 12.0 or newer (.NET 10)**. On Jellyfin 10.10/10.11 pick **v2.5.0.0** from the catalog instead.
+
 ## Manual Install (Fallback)
 
-1. Download the latest `jellyfin-plugin-ambilight_x.x.x.zip` from [Releases](https://github.com/gabrielprat/jellyfin-ambilight/releases)
-2. Extract the zip file
-3. Copy the `Jellyfin.Plugin.Ambilight` folder to your Jellyfin plugins directory:
-   - Linux: `/var/lib/jellyfin/plugins/`
-   - Windows: `C:\ProgramData\Jellyfin\Server\plugins\`
-   - Docker: `/config/plugins/`
-4. Restart Jellyfin
+1. Download the latest `ambilight_x.x.x.x.zip` from [Releases](https://github.com/luisillo26/jellyfin-ambilight/releases)
+2. Extract the zip into a new `Ambilight` folder in your Jellyfin plugins directory (the archive holds the DLL, `thumb.png` and `meta.json` at its root):
+   - Linux: `/var/lib/jellyfin/plugins/Ambilight/`
+   - Windows: `C:\ProgramData\Jellyfin\Server\plugins\Ambilight\`
+   - Docker: `/config/plugins/Ambilight/`
+3. Restart Jellyfin
 
 ## Verification
 

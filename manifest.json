@@ -6,7 +6,7 @@
     "overview": "Automatic ambilight effects for movies and TV shows with real-time WLED control",
     "owner": "Gabriel Prat",
     "category": "General",
-    "imageUrl": "https://raw.githubusercontent.com/gabrielprat/jellyfin-ambilight/refs/heads/master/docs/thumb.png",
+    "imageUrl": "https://raw.githubusercontent.com/luisillo26/jellyfin-ambilight/master/docs/thumb.png",
     "versions": [
       {
         "version": "2.5.0.0",

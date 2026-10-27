@@ -13,7 +13,7 @@ If the build fails, analyze the errors and suggest fixes.
 If it succeeds, show the compiled plugin path and timestamp:
 
 ```bash
-ls -la bin/Release/net8.0/Jellyfin.Plugin.Ambilight.dll
+ls -la bin/Release/net10.0/Jellyfin.Plugin.Ambilight.dll
 ```
 
 Report 0 warnings, 0 errors, and the full path to the compiled DLL.

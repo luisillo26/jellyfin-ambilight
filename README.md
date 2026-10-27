@@ -24,7 +24,8 @@ Ambilight creates ambient lighting that matches the colors on your screen edges,
 
 ## Requirements
 
-- Jellyfin 10.10.x or compatible version
+- Jellyfin 12.0 or newer (.NET 10)
+  - Still on Jellyfin 10.10/10.11? Install **v2.5.0.0** from the catalog; it stays published for the 10.x line.
 - WLED-compatible LED controller
 - LED strips installed around your TV/monitor
 - Docker volume (if running Jellyfin in Docker)
@@ -94,20 +95,19 @@ This folder stores extracted ambilight binary files (`.bin`) and should persist 
 2. Click **Add Repository**
 3. Enter:
    - **Name:** `Ambilight`
-   - **URL:** `https://raw.githubusercontent.com/gabrielprat/jellyfin-ambilight/refs/heads/master/manifest.json`
+   - **URL:** `https://raw.githubusercontent.com/luisillo26/jellyfin-ambilight/master/manifest.json`
 4. Save, then open **Catalog**
 5. Search for **Ambilight** and click **Install**
 6. Restart Jellyfin
 
 ### Manual Install (Fallback)
 
-1. Download the latest `jellyfin-plugin-ambilight_x.x.x.zip` from [Releases](https://github.com/gabrielprat/jellyfin-ambilight/releases)
-2. Extract the zip
-3. Copy the `Jellyfin.Plugin.Ambilight` folder to your Jellyfin plugins directory:
-   - Linux: `/var/lib/jellyfin/plugins/`
-   - Docker: `/config/plugins/`
-   - Windows: `C:\ProgramData\Jellyfin\Server\plugins\`
-4. Restart Jellyfin
+1. Download the latest `ambilight_x.x.x.x.zip` from [Releases](https://github.com/luisillo26/jellyfin-ambilight/releases)
+2. Extract the zip into a new `Ambilight` folder in your Jellyfin plugins directory (the archive holds `Jellyfin.Plugin.Ambilight.dll`, `thumb.png` and `meta.json` at its root):
+   - Linux: `/var/lib/jellyfin/plugins/Ambilight/`
+   - Docker: `/config/plugins/Ambilight/`
+   - Windows: `C:\ProgramData\Jellyfin\Server\plugins\Ambilight\`
+3. Restart Jellyfin
 
 ## Configuration
 

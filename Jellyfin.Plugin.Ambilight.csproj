@@ -1,10 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <AssemblyName>Jellyfin.Plugin.Ambilight</AssemblyName>
-    <AssemblyVersion>2.5.0</AssemblyVersion>
-    <FileVersion>2.5.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
@@ -23,9 +21,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Use Jellyfin 10.10.* packages, but do not ship their runtimes -->
-    <PackageReference Include="Jellyfin.Model" Version="10.10.*" PrivateAssets="All" />
-    <PackageReference Include="Jellyfin.Controller" Version="10.10.*" PrivateAssets="All" />
+    <!-- Jellyfin 12.x assemblies; never ship them with the plugin -->
+    <PackageReference Include="Jellyfin.Model" Version="12.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -36,15 +38,5 @@
     <EmbeddedResource Include="Binaries\win-x64\ambilight-extractor.exe" Condition="Exists('Binaries\win-x64\ambilight-extractor.exe')" />
     <EmbeddedResource Include="Binaries\osx-x64\ambilight-extractor" Condition="Exists('Binaries\osx-x64\ambilight-extractor')" />
     <EmbeddedResource Include="Binaries\osx-arm64\ambilight-extractor" Condition="Exists('Binaries\osx-arm64\ambilight-extractor')" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Copy plugin icon to output directory so Jellyfin can display it -->
-    <None Include="docs\thumb.png" Link="thumb.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="meta.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>

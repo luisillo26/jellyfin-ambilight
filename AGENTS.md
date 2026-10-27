@@ -1,6 +1,6 @@
 # AGENTS.md — Jellyfin Ambilight Plugin
 
-C# / .NET 8 plugin for Jellyfin that drives WLED LED strips with edge-detected video colors. Single project, no solution file.
+C# / .NET 10 plugin for Jellyfin 12 that drives WLED LED strips with edge-detected video colors. Single project, no solution file.
 
 ## Build
 
@@ -26,9 +26,10 @@ No test suite, no linter, no formatter, no typecheck beyond what the compiler pr
 
 - All C# files include GPL-3.0 license headers.
 - Nullable reference types and implicit usings are enabled.
-- Jellyfin packages pinned to `10.10.*` with `PrivateAssets="All"` (not shipped).
+- Jellyfin packages pinned to `12.0.0` with `ExcludeAssets="runtime"` (not shipped). The 12.x packages only ship `lib/net10.0`, so the project must target `net10.0`.
 - NuGet restore forced to nuget.org only.
-- NuGet package versions float (`10.10.*`), no lockfile.
+- No lockfile. Bump the Jellyfin package versions only together with `targetAbi` in `build.yaml` — a plugin compiled against one major version will not load on the next (see the Jellyfin 12.0 notes).
+- `build.yaml` is the source of truth for version, `targetAbi`, framework and artifacts. JPRM rewrites `Version`/`AssemblyVersion`/`FileVersion` in `Directory.Build.props` at release time, so never hardcode them in the csproj — a mismatch between the assembly version and the catalog version breaks the plugin icon and the enable/disable switch (exact-match lookup in `PluginManager.GetPlugin(id, version)`).
 - Config hot-reloaded at runtime — services read `Plugin.Instance?.Configuration` directly, no caching.
 
 ## AMb2 binary format

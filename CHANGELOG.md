@@ -7,6 +7,18 @@ All notable changes to the Jellyfin Ambilight Plugin will be documented in this 
 ### Added
 - Added support to reverse the layout of the LEDs. This can help if installation is in counterclockwise
 
+## [3.0.0] - 2026-10-26
+
+### Changed
+- **Jellyfin 12 support** — Built against `Jellyfin.Controller`/`Jellyfin.Model` 12.0.0 and .NET 10, `targetAbi: 12.0.0.0`. Plugin version is now `3.0.0.0`. Jellyfin 10.10/10.11 users stay on 2.5.0.0, which remains in the manifest.
+- **Packaging moved to JPRM** — `build.yaml` is the source of truth for name, version, target ABI, framework and artifacts, and the release workflow packages with [JPRM](https://github.com/oddstr13/jellyfin-plugin-repository-manager), the tool used by the official plugin template. CI now calls `jellyfin/jellyfin-meta-plugins`.
+- **Release assets renamed** — zips are now `ambilight_<version>.zip` with the DLL, `thumb.png` and `meta.json` at the archive root.
+
+### Fixed
+- **Missing plugin icon and non-functional enable/disable switch on Jellyfin 12** — The catalog published three-part versions (`2.5.0`) while the assembly reported four-part ones (`2.5.0.0`). Jellyfin resolves `/Plugins/{id}/{version}/Image` and `/Plugins/{id}/{version}/Disable` by exact version match, so both returned 404: no icon, the toggle did nothing, and the server logged nothing. Every manifest entry is now four-part, and JPRM now writes the same version into the project, the assembly and `meta.json`.
+- **Duplicate 2.5.0 manifest entry** — Removed the second `2.5.0` entry that had no checksum.
+- **Missing 2.4.2 checksum** — Filled in from the published release asset.
+
 ## [2.5.0] - 2026-07-27
 
 ### Added
